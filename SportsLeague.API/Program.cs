@@ -15,6 +15,7 @@ builder.Services.AddDbContext<LeagueDbContext>(options =>
 // ── Repositories ── 
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<ITeamRepository, TeamRepository>();
+<<<<<<< HEAD
 builder.Services.AddScoped<IPlayerRepository, PlayerRepository>();
 builder.Services.AddScoped<IRefereeRepository, RefereeRepository>();       
 builder.Services.AddScoped<ITournamentRepository, TournamentRepository>();    
@@ -25,6 +26,11 @@ builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IPlayerService, PlayerService>();
 builder.Services.AddScoped<IRefereeService, RefereeService>();          
 builder.Services.AddScoped<ITournamentService, TournamentService>();   
+=======
+
+// ── Services ── 
+builder.Services.AddScoped<ITeamService, TeamService>();
+>>>>>>> 2eba5c4a76d5a55695781a3f6395d315c88a5c96
 
 // ── AutoMapper ── 
 builder.Services.AddAutoMapper(typeof(Program).Assembly);

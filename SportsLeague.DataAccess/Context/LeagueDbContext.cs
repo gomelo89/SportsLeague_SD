@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+<<<<<<< HEAD
 
 using SportsLeague.Domain.Entities;
 using System.Numerics;
@@ -30,10 +31,26 @@ public class LeagueDbContext : DbContext
     public DbSet<TournamentTeam> TournamentTeams => Set<TournamentTeam>(); 
 
 
+=======
+using SportsLeague.Domain.Entities;
+
+namespace SportsLeague.DataAccess.Context;
+
+public class LeagueDbContext : DbContext
+{
+    public LeagueDbContext(DbContextOptions<LeagueDbContext> options)
+
+        : base(options)
+    {
+
+    }
+    public DbSet<Team> Teams => Set<Team>();
+>>>>>>> 2eba5c4a76d5a55695781a3f6395d315c88a5c96
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
 
     {
+<<<<<<< HEAD
 
         base.OnModelCreating(modelBuilder);
 
@@ -56,12 +73,30 @@ public class LeagueDbContext : DbContext
                   .HasMaxLength(150);
             entity.Property(t => t.LogoUrl)
                   .HasMaxLength(500);
+=======
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<Team>(entity =>
+        {
+        entity.HasKey(t => t.Id);
+        entity.Property(t => t.Name)
+              .IsRequired()
+              .HasMaxLength(100);
+        entity.Property(t => t.City)
+              .IsRequired()
+              .HasMaxLength(100);
+        entity.Property(t => t.Stadium)
+              .HasMaxLength(150);
+            entity.Property(t => t.LogoUrl)
+               .HasMaxLength(500);
+>>>>>>> 2eba5c4a76d5a55695781a3f6395d315c88a5c96
             entity.Property(t => t.CreatedAt)
                   .IsRequired();
             entity.Property(t => t.UpdatedAt)
                   .IsRequired(false);
             entity.HasIndex(t => t.Name)
                   .IsUnique();
+<<<<<<< HEAD
         });
 
         // ── Player Configuration ── 
@@ -167,4 +202,9 @@ public class LeagueDbContext : DbContext
         });
     }
 
+=======
+
+        });
+    }
+>>>>>>> 2eba5c4a76d5a55695781a3f6395d315c88a5c96
 }

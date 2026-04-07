@@ -12,6 +12,7 @@ public class MappingProfile : Profile
         // Team mappings 
         CreateMap<TeamRequestDTO, Team>();
         CreateMap<Team, TeamResponseDTO>();
+<<<<<<< HEAD
 
         // Player mappings 
         CreateMap<PlayerRequestDTO, Player>();
@@ -31,5 +32,7 @@ public class MappingProfile : Profile
                 dest => dest.TeamsCount,
                 opt => opt.MapFrom(src =>
                     src.TournamentTeams != null ? src.TournamentTeams.Count : 0));
+=======
+>>>>>>> 2eba5c4a76d5a55695781a3f6395d315c88a5c96
     }
 }
