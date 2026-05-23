@@ -13,6 +13,8 @@ public class MatchEventService : IMatchEventService
     private readonly IMatchResultRepository _matchResultRepository;
     private readonly IGoalRepository _goalRepository;
     private readonly ICardRepository _cardRepository;
+    private readonly IMatchLineupRepository _lineupRepository; // Nuevo 
+    private readonly IPlayerRepository _playerRepository;   // Nuevo
     private readonly MatchValidationHelper _validationHelper;
     private readonly ILogger<MatchEventService> _logger;
 
@@ -21,6 +23,8 @@ public class MatchEventService : IMatchEventService
         IMatchResultRepository matchResultRepository,
         IGoalRepository goalRepository,
         ICardRepository cardRepository,
+        IMatchLineupRepository lineupRepository, // Nuevo
+        IPlayerRepository playerRepository,   //Nuevo
         MatchValidationHelper validationHelper,
         ILogger<MatchEventService> logger)
     {
@@ -28,6 +32,8 @@ public class MatchEventService : IMatchEventService
         _matchResultRepository = matchResultRepository;
         _goalRepository = goalRepository;
         _cardRepository = cardRepository;
+        _lineupRepository = lineupRepository;   // Nuevo
+        _playerRepository = playerRepository;   //Nuevo
         _validationHelper = validationHelper;
         _logger = logger;
     }
@@ -127,5 +133,76 @@ public class MatchEventService : IMatchEventService
         if (!exists)
             throw new KeyNotFoundException( $"No se encontró la tarjeta con ID {cardId}");
         await _cardRepository.DeleteAsync(cardId);
+    }
+
+    // ═══ Match Lineups ═══ 
+    public async Task<MatchLineup> RegisterLineupAsync(int matchId, MatchLineup lineup)
+    {
+        // El partido existe y esta en Scheduled
+        var match = await _matchRepository.GetByIdAsync(matchId);
+        if (match == null)
+            throw new KeyNotFoundException($"No se encontró el partido con ID {matchId}");
+
+        if (match.Status != MatchStatus.Scheduled)
+            throw new InvalidOperationException("Solo se pueden registrar alineaciones en partidos con estado Scheduled");
+
+        // El jugador existir
+        var player = await _playerRepository.GetByIdAsync(lineup.PlayerId);
+        if (player == null)
+            throw new KeyNotFoundException($"No se encontró el jugador con ID {lineup.PlayerId}");
+
+        // El jugador pertenece a HomeTeam o AwayTeam en el Match
+        if (player.TeamId != match.HomeTeamId && player.TeamId != match.AwayTeamId)
+            throw new InvalidOperationException("El jugador no pertenece a ninguno de los equipos inscritos en este partido");
+
+        // El jugador no puede estar registrado dos veces en una alineación para el mismo partido
+        var isDuplicated = await _lineupRepository.ExistsByMatchAndPlayerAsync(matchId, lineup.PlayerId);
+        if (isDuplicated)
+            throw new InvalidOperationException("El jugador ya está registrado en la alineación de este partido");
+
+        // Máximo 11 titulares por equipo por partido cuando IsStarter is true, es titular; y cuando hay mas de 11, se lanza error 
+        if (lineup.IsStarter)
+        {
+            var currentLineups = await _lineupRepository.GetByMatchAndTeamAsync(matchId, player.TeamId);
+            int startersCount = currentLineups.Count(ml => ml.IsStarter);
+
+            if (startersCount > 11)
+                throw new InvalidOperationException("El equipo ya tiene 11 titulares registrados en este partido");
+        }
+
+        lineup.MatchId = matchId;
+
+        _logger.LogInformation("Registering lineup: Match {MatchId}, Player {PlayerId}, Starter: {IsStarter}",
+            matchId, lineup.PlayerId, lineup.IsStarter);
+
+        return await _lineupRepository.CreateAsync(lineup);
+    }
+
+    public async Task<IEnumerable<MatchLineup>> GetLineupsByMatchAsync(int matchId)
+    {
+        var match = await _matchRepository.GetByIdAsync(matchId);
+        if (match == null)
+            throw new KeyNotFoundException($"No se encontró el partido con ID {matchId}");
+
+        return await _lineupRepository.GetByMatchAsync(matchId);
+    }
+
+    public async Task<IEnumerable<MatchLineup>> GetLineupsByMatchAndTeamAsync(int matchId, int teamId)
+    {
+        var match = await _matchRepository.GetByIdAsync(matchId);
+        if (match == null)
+            throw new KeyNotFoundException($"No se encontró el partido con ID {matchId}");
+
+        return await _lineupRepository.GetByMatchAndTeamAsync(matchId, teamId);
+    }
+
+    public async Task DeleteLineupAsync(int matchId, int lineupId)
+    {
+        var lineup = await _lineupRepository.GetByIdAsync(lineupId);
+        if (lineup == null || lineup.MatchId != matchId)
+            throw new KeyNotFoundException($"No se encontró la alineación con ID {lineupId} para este partido");
+
+        _logger.LogInformation("Deleting lineup registry with ID: {LineupId} from match {MatchId}", lineupId, matchId);
+        await _lineupRepository.DeleteAsync(lineupId);
     }
 }

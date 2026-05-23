@@ -17,4 +17,10 @@ public interface IMatchEventService
     Task<Card> RegisterCardAsync(int matchId, Card card);
     Task<IEnumerable<Card>> GetCardsByMatchAsync(int matchId);
     Task DeleteCardAsync(int cardId);
+
+    //MatchLineup
+    Task<MatchLineup> RegisterLineupAsync(int matchId, MatchLineup lineup);
+    Task<IEnumerable<MatchLineup>> GetLineupsByMatchAsync(int matchId);
+    Task<IEnumerable<MatchLineup>> GetLineupsByMatchAndTeamAsync(int matchId, int teamId);
+    Task DeleteLineupAsync(int matchId, int lineupId);
 }

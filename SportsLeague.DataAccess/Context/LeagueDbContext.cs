@@ -19,6 +19,7 @@ namespace SportsLeague.DataAccess.Context
         public DbSet<MatchResult> MatchResults => Set<MatchResult>();
         public DbSet<Goal> Goals => Set<Goal>();
         public DbSet<Card> Cards => Set<Card>();
+        public DbSet<MatchLineup> MatchLineups => Set<MatchLineup>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -246,6 +247,28 @@ namespace SportsLeague.DataAccess.Context
                 entity.HasOne(c => c.Player)
                       .WithMany(p => p.Cards)
                       .HasForeignKey(c => c.PlayerId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // MatchLineup Configuration
+            modelBuilder.Entity<MatchLineup>(entity =>
+            {
+                entity.HasKey(ml => ml.Id);
+                entity.Property(ml => ml.Position).IsRequired();
+
+                // Índice único compuesto para evitar jugadores duplicados en el mismo partido
+                entity.HasIndex(ml => new { ml.MatchId, ml.PlayerId }).IsUnique();
+
+                // Relación con Match (Un partido tiene muchas MatchLineups)
+                entity.HasOne(ml => ml.Match)
+                      .WithMany(m => m.MatchLineups)
+                      .HasForeignKey(ml => ml.MatchId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                // Relación con Player (Un jugador puede estar en muchas MatchLineups)
+                entity.HasOne(ml => ml.Player)
+                      .WithMany(p => p.MatchLineups)
+                      .HasForeignKey(ml => ml.PlayerId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
         }

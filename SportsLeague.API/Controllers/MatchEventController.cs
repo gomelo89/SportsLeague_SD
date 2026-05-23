@@ -121,4 +121,58 @@ public class MatchEventController : ControllerBase
         try { await _matchEventService.DeleteCardAsync(cardId); return NoContent(); }
         catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
     }
+
+    // ═══ Lineups ═══ 
+
+    [HttpPost("lineup")]
+    public async Task<ActionResult<MatchLineupResponseDTO>> RegisterLineup(
+        int matchId, MatchLineupRequestDTO dto)
+    {
+        try
+        {
+            var lineup = _mapper.Map<MatchLineup>(dto);
+            var created = await _matchEventService.RegisterLineupAsync(matchId, lineup);
+
+            // Re-consultamos para que AutoMapper tenga los Includes de nombres al mapear a ResponseDTO
+            var lineups = await _matchEventService.GetLineupsByMatchAsync(matchId);
+            var createdLineup = lineups.FirstOrDefault(l => l.PlayerId == created.PlayerId);
+
+            return Ok(_mapper.Map<MatchLineupResponseDTO>(createdLineup));
+        }
+        catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
+
+    [HttpGet("lineup")]
+    public async Task<ActionResult<IEnumerable<MatchLineupResponseDTO>>> GetLineups(int matchId)
+    {
+        try
+        {
+            var lineups = await _matchEventService.GetLineupsByMatchAsync(matchId);
+            return Ok(_mapper.Map<IEnumerable<MatchLineupResponseDTO>>(lineups));
+        }
+        catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+    }
+
+    [HttpGet("lineup/team/{teamId}")]
+    public async Task<ActionResult<IEnumerable<MatchLineupResponseDTO>>> GetLineupsByTeam(int matchId, int teamId)
+    {
+        try
+        {
+            var lineups = await _matchEventService.GetLineupsByMatchAndTeamAsync(matchId, teamId);
+            return Ok(_mapper.Map<IEnumerable<MatchLineupResponseDTO>>(lineups));
+        }
+        catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+    }
+
+    [HttpDelete("lineup/{lineupId}")]
+    public async Task<ActionResult> DeleteLineup(int matchId, int lineupId)
+    {
+        try
+        {
+            await _matchEventService.DeleteLineupAsync(matchId, lineupId);
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+    }
 }
